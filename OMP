@@ -1,0 +1,32 @@
+import osmnx as ox
+import networkx as nx
+import matplotlib.pyplot as plt
+
+# 1. Stažení sítě pro chodce (oblast kolem Václavského náměstí)
+# Souřadnice středu Václavského náměstí
+stred_oblasti = (50.0814, 14.4266)
+G = ox.graph_from_point(stred_oblasti, dist=1000, network_type="walk")
+
+# Přidání průměrné rychlosti chůze (5 km/h) pro výpočet času
+G = ox.add_edge_speeds(G, fallback=5.0)
+G = ox.add_edge_travel_times(G)
+
+# 2. Souřadnice začátku a konce trasy
+# Start: Socha svatého Václava (horní část náměstí)
+start = (50.0797, 14.4298)
+# Cíl: Můstek (dolní část náměstí)
+end = (50.0842, 14.4233)
+
+# 3. Nalezení nejbližších uzlů v grafu k zadaným souřadnicím
+orig = ox.distance.nearest_nodes(G, start[1], start[0])
+dest = ox.distance.nearest_nodes(G, end[1], end[0])
+
+# 4. Nalezení nejkratší cesty 
+route = ox.shortest_path(G, orig, dest, weight="length")
+
+# 5. Výpočet času a výpis
+cas_s = sum([G[u][v][0].get("travel_time", 0) for u, v in zip(route[:-1], route[1:])])
+print(f"Čas chůze: {int(cas_s // 60)} minut {int(cas_s % 60)} sekund")
+
+# 6. Vykreslení grafu s vyznačenou trasou
+ox.plot_graph_route(G, route)
